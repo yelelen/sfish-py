@@ -243,7 +243,7 @@ class AudioAlbumPipeline(object):
         es_item["title"] = item["title"]
         es_item["tag"] = item["tag"]
         es_item["last_update"] = item["last_update"]
-        es_item["play_count"] = item["play_count"]
+        es_item["play_count"] = item.get("play_count", "0")
         es_item["desc"] = item.get("desc", '主播比较懒，还没有该专辑的相关描述哦')
         es_item["sounds"] = item["sounds"]
         es_item["suggest"] = self.gen_suggest(AudioAlbum._doc_type.index, item["title"], 10, analyzer="ik_max_word")\
@@ -275,7 +275,4 @@ class AudioAlbumPipeline(object):
                         s.save()
         except Exception as e:
             print(e.__cause__)
-
-
-            pass
         return item
