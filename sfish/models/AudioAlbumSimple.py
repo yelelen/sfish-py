@@ -12,23 +12,17 @@ ik_analyzer = CustomAnalyzer("ik_max_word")
 connections.create_connection(hosts=["localhost"])
 
 
-class AudioAlbum(DocType):
-    aa_order = Integer()
-    aa_zhubo_id = Integer()
-    aa_cover = Keyword()
-    aa_title = Text(analyzer="ik_max_word")
-    aa_tag = Text(analyzer="simple")
-    aa_last_update = Keyword()
-    aa_play_count = Keyword()
-    aa_desc = Keyword()
-    aa_sounds = Keyword()
-    aa_suggest = Completion(analyzer=ik_analyzer)
-
+class AudioAlbumSimple(DocType):
+    aas_order = Integer()
+    aas_cover = Keyword()
+    aas_title = Text(analyzer="ik_max_word")
+    aas_play_count = Integer()
+    aas_suggest = Completion(analyzer=ik_analyzer)
 
     class Meta:
         index = "audio"
-        doc_type = "album"
+        doc_type = "album_simple"
 
 if __name__ == "__main__":
-    AudioAlbum().init()
+    AudioAlbumSimple().init()
 

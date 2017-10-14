@@ -6,9 +6,9 @@ connections.create_connection(hosts=["localhost"])
 
 
 class MMLabel(DocType):
-    cover = Keyword()
-    label = Keyword()
-    order = Integer()
+    mml_cover = Keyword()
+    mml_label = Keyword()
+    mml_order = Integer()
 
     class Meta:
         index = 'mm'

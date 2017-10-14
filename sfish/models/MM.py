@@ -13,14 +13,14 @@ connections.create_connection(hosts=["localhost"])
 
 
 class MM(DocType):
-    title = Text(analyzer="ik_max_word")
-    seen_num = Integer()
-    fav_num = Integer()
-    first_image_url = Keyword()
-    order = Integer()
-    total_num = Integer()
-    tags = Text(analyzer="simple")
-    suggest = Completion(analyzer=ik_analyzer)
+    mm_title = Text(analyzer="ik_max_word")
+    mm_seen_num = Integer()
+    mm_fav_num = Integer()
+    mm_first_image_url = Keyword()
+    mm_order = Integer()
+    mm_total_num = Integer()
+    mm_tags = Text(analyzer="simple")
+    mm_suggest = Completion(analyzer=ik_analyzer)
 
     class Meta:
         index = 'mm'

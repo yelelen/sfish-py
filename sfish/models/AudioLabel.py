@@ -5,10 +5,10 @@ connections.create_connection(hosts=["localhost"])
 
 
 class AudioLabel(DocType):
-    order = Integer()
-    cid = Integer()
-    url = Keyword()
-    name = Keyword()
+    al_order = Integer()
+    al_cid = Integer()
+    al_url = Keyword()
+    al_name = Keyword()
 
     class Meta:
         index = "audio"

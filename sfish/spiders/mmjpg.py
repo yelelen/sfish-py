@@ -63,6 +63,6 @@ class MmjpgSpider(CrawlSpider):
         return spider
 
     def spider_closed(self, spider, reason):
-        self.client.close()
+        # self.client.close()
         print('spider closed!!!!!!!!!!!!!!' + reason)
 

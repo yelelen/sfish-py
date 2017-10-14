@@ -6,18 +6,17 @@
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
 from elasticsearch_dsl.connections import connections
-from items import AnimeDetailItem, AnimeEpisodeItem, AudioSoundNumItem, AudioZhuboNumItem
-from models.MM import MM
+
+from items import AnimeDetailItem, AnimeEpisodeItem
 from models.AudioAlbum import AudioAlbum
-from models.AudioSoundNum import AudioSoundNum
-from models.AudioZhuboNum import AudioZhuboNum
+from models.MM import MM
 
 
 class MmPipeline(object):
     def __init__(self):
         self.es = connections.create_connection(MM._doc_type.using)
         MM.init()
-        self.s = MM.search()
+        self.search = MM.search()
 
     def process_item(self, item, spider):
         # post_item = dict(item)
@@ -30,28 +29,26 @@ class MmPipeline(object):
         # return item
 
         try:
-            rs = self.s.query("term", order=item["order"]).execute()
-            if len(rs) > 0:
-                mm = rs[0]
-                mm.update(seen_num=item["seen_num"], fav_num=item["fav_num"])
-            else:
-                self.save_mm(item)
-        except:
-            self.save_mm(item)
-        return item
+            mm = MM()
+            mm["mm_title"] = item["title"]
+            mm["mm_seen_num"] = item["seen_num"]
+            mm["mm_fav_num"] = item["fav_num"]
+            mm["mm_first_image_url"] = item["first_image_url"]
+            mm["mm_order"] = item["order"]
+            mm["mm_total_num"] = item["total_num"]
+            mm["mm_tags"] = item["tags"]
+            mm["mm_suggest"] = self.gen_suggest(MM._doc_type.index, item["title"], 10,
+                                                "ik_max_word") + self.gen_suggest(
+                MM._doc_type.index, item["tags"], 7, "simple")
 
-    def save_mm(self, item):
-        mm = MM()
-        mm["title"] = item["title"]
-        mm["seen_num"] = item["seen_num"]
-        mm["fav_num"] = item["fav_num"]
-        mm["first_image_url"] = item["first_image_url"]
-        mm["order"] = item["order"]
-        mm["total_num"] = item["total_num"]
-        mm["tags"] = item["tags"]
-        mm["suggest"] = self.gen_suggest(MM._doc_type.index, item["title"], 10, "ik_max_word") + self.gen_suggest(
-            MM._doc_type.index, item["tags"], 7, "simple")
-        mm.save()
+            rs = self.search.query("term", mm_order=mm["mm_order"]).execute()
+            if len(rs) > 0:
+                mm.update(mm_seen_num=mm["mm_seen_num"], mm_fav_num=mm["mm_fav_num"])
+            else:
+                mm.save()
+        except Exception as e:
+            print(e.__cause__)
+        return item
 
     def gen_suggest(self, index, text, weight, analyzer):
         used_words = set()
@@ -204,14 +201,8 @@ class AudioAlbumPipeline(object):
 
     def __init__(self):
         self.es_album = connections.create_connection(AudioAlbum._doc_type.using)
-        self.es_zhubo_num = connections.create_connection(AudioZhuboNum._doc_type.using)
-        self.es_sound_num = connections.create_connection(AudioSoundNum._doc_type.using)
         AudioAlbum.init()
-        AudioZhuboNum.init()
-        AudioSoundNum.init()
         self.search_album = AudioAlbum.search()
-        self.search_zhubo_num = AudioZhuboNum.search()
-        self.search_sound_num = AudioSoundNum.search()
 
     def gen_suggest(self, index, text, weight, analyzer):
         used_words = set()
@@ -234,45 +225,26 @@ class AudioAlbumPipeline(object):
         if item is None:
             return None
         item = dict(item)
-        # print(item.keys())
-
-        es_item = AudioAlbum()
-        es_item["order"] = item["order"]
-        es_item["zhubo_id"] = item["zhubo_id"]
-        es_item["cover"] = item["cover"]
-        es_item["title"] = item["title"]
-        es_item["tag"] = item["tag"]
-        es_item["last_update"] = item["last_update"]
-        es_item["play_count"] = item.get("play_count", "0")
-        es_item["desc"] = item.get("desc", '主播比较懒，还没有该专辑的相关描述哦')
-        es_item["sounds"] = item["sounds"]
-        es_item["suggest"] = self.gen_suggest(AudioAlbum._doc_type.index, item["title"], 10, analyzer="ik_max_word")\
-                             + self.gen_suggest(AudioAlbum._doc_type.index, item["tag"], 7, analyzer="simple")
 
         try:
-            rs = self.search_album.query("term", order=es_item["order"]).execute()
+            es_item = AudioAlbum()
+            es_item["aa_order"] = item["order"]
+            es_item["aa_zhubo_id"] = item["zhubo_id"]
+            es_item["aa_cover"] = item["cover"]
+            es_item["aa_title"] = item["title"]
+            es_item["aa_tag"] = item["tag"]
+            es_item["aa_last_update"] = item["last_update"]
+            es_item["aa_play_count"] = item.get("play_count", "0")
+            es_item["aa_desc"] = item.get("desc", '主播比较懒，还没有该专辑的相关描述哦')
+            es_item["aa_sounds"] = item["sounds"]
+            es_item["aa_suggest"] = self.gen_suggest(AudioAlbum._doc_type.index, item["title"], 10, analyzer="ik_max_word") \
+                                 + self.gen_suggest(AudioAlbum._doc_type.index, item["tag"], 7, analyzer="simple")
+
+            rs = self.search_album.query("term", aa_order=es_item["aa_order"]).execute()
             if len(rs) <= 0:
                 es_item.save()
-                zhubos = self.search_zhubo_num.query("term", order=es_item["zhubo_id"]).execute()
-                if len(zhubos) <= 0:
-                    z = AudioZhuboNum()
-                    z["order"] = int(es_item["zhubo_id"])
-                    z.save()
-
-                for sound_num in es_item['sounds'].split(','):
-                    sound = self.search_sound_num.query("term", order=int(sound_num)).execute()
-                    if len(sound) <= 0:
-                        s = AudioSoundNum()
-                        s["order"] = int(sound_num)
-                        s.save()
             else:
-                es_item.update(last_update=es_item["last_update"], play_count=es_item["play_count"], sounds=es_item["sounds"])
-                for sound_num in es_item['sounds'].split(','):
-                    sound = self.search_sound_num.query("term", order=int(sound_num)).execute()
-                    if len(sound) <= 0:
-                        s = AudioSoundNum()
-                        s["order"] = int(sound_num)
-                        s.save()
+                es_item.update(aa_last_update=es_item["aa_last_update"], aa_play_count=es_item["aa_play_count"], aa_sounds=es_item["aa_sounds"])
         except Exception as e:
             print(e.__cause__)
         return item

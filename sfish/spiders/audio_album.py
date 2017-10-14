@@ -7,6 +7,8 @@ import re
 import requests
 from models.AudioLabel import AudioLabel
 from elasticsearch_dsl.connections import connections
+from utils.audio_album_simple import get_album_simple
+from utils.audio_sounds import get_sounds
 
 connections.create_connection(AudioLabel._doc_type.using)
 
@@ -68,7 +70,7 @@ class AudioAlbumSpider(CrawlSpider):
         self.label_lists = [x.to_dict() for x in self.label_lists]
 
         self.label_count = self.label_lists.__len__()
-        self.start_urls.append(self.label_lists[0]['url'])
+        self.start_urls.append(self.label_lists[0]['al_url'])
 
         self.page_item_count = 0
         self.page = 1
@@ -90,6 +92,7 @@ class AudioAlbumSpider(CrawlSpider):
         print('parse_start_url --------> ' + response.url)
         self.page = 1
         self.first_page_url = response.url
+        get_album_simple(self.first_page_url)
 
         sel = Selector(response=response)
         ls = sel.css('.pagingBar_page::text').extract()
@@ -125,6 +128,8 @@ class AudioAlbumSpider(CrawlSpider):
         loader.add_value('sounds', self.get_sounds_id(response))
 
         item = loader.load_item()
+        get_sounds([int(x) for x in item['sounds'].split(',')])
+
         yield item
 
         self.page_item_count += 1
@@ -136,6 +141,7 @@ class AudioAlbumSpider(CrawlSpider):
                     self.page_album_count = self.last_page_album_count
                 next_url = self.first_page_url + str(self.page)
                 print('next_page_url -------------------> ' + next_url)
+                get_album_simple(next_url)
                 yield Request(next_url, callback=self.parse_page)
             else:
                 self.label_index += 1

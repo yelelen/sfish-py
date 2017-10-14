@@ -86,12 +86,12 @@ def get_label():
     for x in main_labels:
         item = AudioLabel()
         sel = Selector(text=x)
-        item['order'] = int(sel.css('li::attr(cid)').extract()[0])
-        item['cid'] = item['order']
-        item['name'] = sel.css('li a::text').extract()[0]
-        item['url'] = base_url + sel.css('li a::attr(href)').extract()[0]
+        item['al_order'] = int(sel.css('li::attr(cid)').extract()[0])
+        item['al_cid'] = item['al_order']
+        item['al_name'] = sel.css('li a::text').extract()[0]
+        item['al_url'] = base_url + sel.css('li a::attr(href)').extract()[0]
         items.append(item)
-        print(item['name'])
+        print(item['al_name'])
 
     count = 0
     for y in second_labels:
@@ -101,16 +101,16 @@ def get_label():
             count += 1
             sel2 = Selector(text=z)
             item = AudioLabel()
-            item['order'] = count + 300
-            item['cid'] = int(sel1.css('div::attr(data-cache)').extract()[0])
-            item['name'] = sel2.css('a::attr(tid)').extract()[0]
-            item['url'] = base_url + sel2.css('a::attr(href)').extract()[0]
+            item['al_order'] = count + 300
+            item['al_cid'] = int(sel1.css('div::attr(data-cache)').extract()[0])
+            item['al_name'] = sel2.css('a::attr(tid)').extract()[0]
+            item['al_url'] = base_url + sel2.css('a::attr(href)').extract()[0]
             items.append(item)
-            print(item['name'])
+            print(item['al_name'])
 
     for label in items:
         try:
-            rs = search.query("term", order=label["order"]).execute()
+            rs = search.query("term", al_order=label["al_order"]).execute()
             if len(rs) <= 0:
                 label.save()
         except Exception as e:

@@ -8,6 +8,7 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
 }
 
+MMLabel.init()
 search = MMLabel.search()
 
 
@@ -21,18 +22,17 @@ def get_mm_label():
         for x in label_lists:
             s = Selector(text=x)
             item = MMLabel()
-            item["cover"] = s.css('a img::attr(src)').extract()[0]
-            item["label"] = s.css('a::text').extract()[0]
-            item["order"] = index
-            print('get label ---> ' + item['label'])
+            item["mml_cover"] = s.css('a img::attr(src)').extract()[0]
+            item["mml_label"] = s.css('a::text').extract()[0]
+            item["mml_order"] = index
+            print('get label ---> ' + item['mml_label'])
 
             try:
-                rs = search.query("term", order=item["order"]).execute()
+                rs = search.query("term", mml_order=item["mml_order"]).execute()
                 if len(rs) <= 0:
                     item.save()
-            except:
-                item.save()
-
+            except Exception as e:
+                print(e.__cause__)
             index -= 1
 
 if __name__ == "__main__":
