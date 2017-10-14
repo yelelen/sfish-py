@@ -78,6 +78,7 @@ class AudioAlbumSpider(CrawlSpider):
         self.page_album_count = 12
         self.first_page_url = ''
         self.last_page_album_count = 0
+        self.play_num = []
 
         super(AudioAlbumSpider, self).__init__()
 
@@ -92,7 +93,8 @@ class AudioAlbumSpider(CrawlSpider):
         print('parse_start_url --------> ' + response.url)
         self.page = 1
         self.first_page_url = response.url
-        get_album_simple(self.first_page_url)
+        self.play_num = []
+        self.play_num = get_album_simple(self.first_page_url)
 
         sel = Selector(response=response)
         ls = sel.css('.pagingBar_page::text').extract()
@@ -128,6 +130,7 @@ class AudioAlbumSpider(CrawlSpider):
         loader.add_value('sounds', self.get_sounds_id(response))
 
         item = loader.load_item()
+        item['play_num'] = self.get_play_num(item)
         get_sounds([int(x) for x in item['sounds'].split(',')])
 
         yield item
@@ -141,7 +144,8 @@ class AudioAlbumSpider(CrawlSpider):
                     self.page_album_count = self.last_page_album_count
                 next_url = self.first_page_url + str(self.page)
                 print('next_page_url -------------------> ' + next_url)
-                get_album_simple(next_url)
+                self.play_num = []
+                self.play_num = get_album_simple(next_url)
                 yield Request(next_url, callback=self.parse_page)
             else:
                 self.label_index += 1
@@ -167,6 +171,13 @@ class AudioAlbumSpider(CrawlSpider):
         match = re.match(r'.*com/(\d+)/album/.*', value)
         if match:
             return match.group(1)
+
+    def get_play_num(self, item):
+        for x in self.play_num:
+            if x['aas_order'] == int(item['order']):
+                return x['aas_play_count']
+        return 0
+
 
     def get_sounds_id(self, value):
         page = 1

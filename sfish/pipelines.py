@@ -237,6 +237,7 @@ class AudioAlbumPipeline(object):
             es_item["aa_play_count"] = item.get("play_count", "0")
             es_item["aa_desc"] = item.get("desc", '主播比较懒，还没有该专辑的相关描述哦')
             es_item["aa_sounds"] = item["sounds"]
+            es_item["aa_play_num"] = item["play_num"]
             es_item["aa_suggest"] = self.gen_suggest(AudioAlbum._doc_type.index, item["title"], 10, analyzer="ik_max_word") \
                                  + self.gen_suggest(AudioAlbum._doc_type.index, item["tag"], 7, analyzer="simple")
 
@@ -244,7 +245,10 @@ class AudioAlbumPipeline(object):
             if len(rs) <= 0:
                 es_item.save()
             else:
-                es_item.update(aa_last_update=es_item["aa_last_update"], aa_play_count=es_item["aa_play_count"], aa_sounds=es_item["aa_sounds"])
+                es_item.update(aa_last_update=es_item["aa_last_update"],
+                               aa_play_count=es_item["aa_play_count"],
+                               aa_sounds=es_item["aa_sounds"],
+                               aa_play_num=es_item["aa_play_num"])
         except Exception as e:
             print(e.__cause__)
         return item

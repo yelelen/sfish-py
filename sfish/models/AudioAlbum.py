@@ -1,4 +1,4 @@
-from elasticsearch_dsl import Keyword, DocType, Integer, Text, Completion
+from elasticsearch_dsl import Keyword, DocType, Integer, Text, Completion, Long
 from elasticsearch_dsl.connections import connections
 from elasticsearch_dsl.analysis import CustomAnalyzer as _CustomAnalyzer
 
@@ -22,6 +22,7 @@ class AudioAlbum(DocType):
     aa_play_count = Keyword()
     aa_desc = Keyword()
     aa_sounds = Keyword()
+    aa_play_num = Long()
     aa_suggest = Completion(analyzer=ik_analyzer)
 
 

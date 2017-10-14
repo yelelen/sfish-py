@@ -208,6 +208,7 @@ class AudioAlbumItem(scrapy.Item):
     play_count = scrapy.Field()
     desc = scrapy.Field()
     sounds = scrapy.Field()
+    play_num = scrapy.Field()
 
 
 class AudioZhuboNumItem(scrapy.Item):
