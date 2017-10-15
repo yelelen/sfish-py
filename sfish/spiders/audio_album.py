@@ -9,6 +9,7 @@ from models.AudioLabel import AudioLabel
 from elasticsearch_dsl.connections import connections
 from utils.audio_album_simple import get_album_simple
 from utils.audio_sounds import get_sounds
+from utils.audio_zhubo import get_zhubos
 
 connections.create_connection(AudioLabel._doc_type.using)
 
@@ -116,46 +117,47 @@ class AudioAlbumSpider(CrawlSpider):
         print('spider closed!!!!!!!!!!!!!!' + reason)
 
     def parse_album(self, response):
-        if re.match(r'^http://m.ximalaya.com/.*', response.url):
-            return
-        loader = AudioAlbumLoader(item=AudioAlbumItem(), response=response)
-        loader.add_value('order', self.get_album_id(response.url))
-        loader.add_value('zhubo_id', self.get_album_zhubo(response.url))
-        loader.add_css('cover', '.albumface180 span img::attr(popsrc)')
-        loader.add_css('title', '.detailContent_title h1::text')
-        loader.add_value('tag', self.get_album_tags(response))
-        loader.add_css('last_update', '.mgr-5::text')
-        loader.add_css('play_count', '.detailContent_playcountDetail span::text')
-        loader.add_css('desc', '.mid_intro article p::text')
-        loader.add_value('sounds', self.get_sounds_id(response))
+        try:
+            if re.match(r'^http://m.ximalaya.com/.*', response.url):
+                return
+            loader = AudioAlbumLoader(item=AudioAlbumItem(), response=response)
+            loader.add_value('order', self.get_album_id(response.url))
+            loader.add_value('zhubo_id', self.get_album_zhubo(response.url))
+            loader.add_css('cover', '.albumface180 span img::attr(popsrc)')
+            loader.add_css('title', '.detailContent_title h1::text')
+            loader.add_value('tag', self.get_album_tags(response))
+            loader.add_css('last_update', '.mgr-5::text')
+            loader.add_css('play_count', '.detailContent_playcountDetail span::text')
+            loader.add_css('desc', '.mid_intro article p::text')
+            loader.add_value('sounds', self.get_sounds_id(response))
 
-        item = loader.load_item()
-        item['play_num'] = self.get_play_num(item)
-        get_sounds([int(x) for x in item['sounds'].split(',')])
+            item = loader.load_item()
+            item['play_num'] = self.get_play_num(item)
+            get_sounds([int(x) for x in item['sounds'].split(',')])
+            get_zhubos(int(item['zhubo_id']))
 
-        yield item
+            yield item
 
-        self.page_item_count += 1
-        if self.page_item_count >= self.page_album_count:
-            self.page_item_count = 0
-            if self.page < self.pages:
-                self.page += 1
-                if self.page == self.pages:
-                    self.page_album_count = self.last_page_album_count
-                next_url = self.first_page_url + str(self.page)
-                print('next_page_url -------------------> ' + next_url)
-                self.play_num = []
-                self.play_num = get_album_simple(next_url)
-                yield Request(next_url, callback=self.parse_page)
-            else:
-                self.label_index += 1
-                if self.label_index < self.label_count:
-                    # self.coll_album = self.db['album' + str((self.label_lists[self.label_index]['_id']))]
-                    yield Request(self.label_lists[self.label_index]['url'], callback=self.parse)
-                    print('go to label -------------------> ' + self.label_lists[self.label_index]['name'])
+            self.page_item_count += 1
+            if self.page_item_count >= self.page_album_count:
+                self.page_item_count = 0
+                if self.page < self.pages:
+                    self.page += 1
+                    if self.page == self.pages:
+                        self.page_album_count = self.last_page_album_count
+                    next_url = self.first_page_url + str(self.page)
+                    print('next_page_url -------------------> ' + next_url)
+                    self.play_num = []
+                    self.play_num = get_album_simple(next_url)
+                    yield Request(next_url, callback=self.parse_page)
                 else:
-                    from utils.audio import audio_main
-                    audio_main()
+                    self.label_index += 1
+                    if self.label_index < self.label_count:
+                        # self.coll_album = self.db['album' + str((self.label_lists[self.label_index]['_id']))]
+                        yield Request(self.label_lists[self.label_index]['al_url'], callback=self.parse)
+                        print('go to label -------------------> ' + self.label_lists[self.label_index]['al_name'])
+        except Exception as e:
+            print(e.__cause__)
 
     def parse_page(self, response):
         return self._parse_response(response, callback=None, cb_kwargs={}, follow=True)

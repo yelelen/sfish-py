@@ -36,26 +36,27 @@ def get_album_simple(page_url):
 
     items = []
     dicts = s.css('.discoverAlbum_item').extract()
-    for x in dicts:
-        item = AudioAlbumSimple()
-        sel = Selector(text=x)
-        item["aas_order"] = int(sel.css('.discoverAlbum_item::attr(album_id)').extract()[0])
-        item["aas_cover"] = sel.css('.albumfaceOutter a span img::attr(src)').extract()[0]
-        item["aas_title"] = sel.css('.albumfaceOutter a span img::attr(alt)').extract()[0]
-        item["aas_play_count"] = int(sel.css('.sound_playcount::text').extract()[0])
-        item["aas_suggest"] = gen_suggest(AudioAlbumSimple._doc_type.index, item["aas_title"], 10, analyzer="ik_max_word")
-        items.append(item)
+    try:
+        for x in dicts:
+            item = AudioAlbumSimple()
+            sel = Selector(text=x)
+            item["aas_order"] = int(sel.css('.discoverAlbum_item::attr(album_id)').extract()[0])
+            item["aas_cover"] = sel.css('.albumfaceOutter a span img::attr(src)').extract()[0]
+            item["aas_title"] = sel.css('.albumfaceOutter a span img::attr(alt)').extract()[0]
+            item["aas_play_count"] = int(sel.css('.sound_playcount::text').extract()[0])
+            item["aas_suggest"] = gen_suggest(AudioAlbumSimple._doc_type.index, item["aas_title"], 10, analyzer="ik_max_word")
+            items.append(item)
 
-    for z in items:
-        try:
-            rs = search.query("term", aas_order=z["aas_order"]).execute()
-            if len(rs) <= 0:
-                z.save()
-            else:
-                z.update(aas_play_count=z["aas_play_count"])
-        except Exception as e:
-            print(e.__cause__)
+        for z in items:
+
+                rs = search.query("term", aas_order=z["aas_order"]).execute()
+                if len(rs) <= 0:
+                    z.save()
+                else:
+                    z.update(aas_play_count=z["aas_play_count"])
+    except Exception as e:
+        print(e.__cause__)
     return items
 
 if __name__ == '__main__':
-    get_album_simple(page_url="http://www.ximalaya.com/dq/book-%E5%A5%B3%E7%94%9F%E6%9C%80%E7%88%B1/1/")
+    get_album_simple(page_url="http://www.ximalaya.com/dq/music-%E9%9F%B3%E4%B9%90%E5%B0%8F%E8%AE%B2%E5%A0%82/15")
