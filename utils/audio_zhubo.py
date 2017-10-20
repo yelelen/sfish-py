@@ -21,6 +21,7 @@ def get_zhubos(zhubo_id):
             z = AudioZhubo()
             sel = Selector(r)
             z['az_order'] = zhubo_id
+            z.meta.id = z['az_order']
             z['az_portrait'] = sel.css('.pic.mgtb-20 img::attr(src)').extract()[0]
             z['az_nickname'] = sel.css('.txt-lg5 span::text').extract()[0]
             z['az_brief'] = sel.css('.elli.mgtb-10 span::attr(title)').extract()[0]

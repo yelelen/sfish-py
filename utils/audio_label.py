@@ -87,6 +87,7 @@ def get_label():
         item = AudioLabel()
         sel = Selector(text=x)
         item['al_order'] = int(sel.css('li::attr(cid)').extract()[0])
+        item.meta.id = item['al_order']
         item['al_cid'] = item['al_order']
         item['al_name'] = sel.css('li a::text').extract()[0]
         item['al_url'] = base_url + sel.css('li a::attr(href)').extract()[0]
@@ -102,6 +103,7 @@ def get_label():
             sel2 = Selector(text=z)
             item = AudioLabel()
             item['al_order'] = count + 300
+            item.meta.id = item['al_order']
             item['al_cid'] = int(sel1.css('div::attr(data-cache)').extract()[0])
             item['al_name'] = sel2.css('a::attr(tid)').extract()[0]
             item['al_url'] = base_url + sel2.css('a::attr(href)').extract()[0]

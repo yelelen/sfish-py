@@ -21,6 +21,7 @@ def get_sounds(sound_nums):
             item = AudioSound()
             src = json.loads(r.text, encoding='utf-8')
             item['as_order'] = num
+            item.meta.id = item['as_order']
             item['as_album_id'] = src['album_id']
             item['as_album_title'] = src['album_title']
             item['as_title'] = src['title']

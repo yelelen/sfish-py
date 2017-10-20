@@ -25,6 +25,7 @@ def get_mm_label():
             item["mml_cover"] = s.css('a img::attr(src)').extract()[0]
             item["mml_label"] = s.css('a::text').extract()[0]
             item["mml_order"] = index
+            item.meta.id = item['mml_order']
             print('get label ---> ' + item['mml_label'])
 
             try:

@@ -30,6 +30,7 @@ class MmPipeline(object):
 
         try:
             mm = MM()
+            mm.meta.id = item["order"]
             mm["mm_title"] = item["title"]
             mm["mm_seen_num"] = item["seen_num"]
             mm["mm_fav_num"] = item["fav_num"]
@@ -41,13 +42,14 @@ class MmPipeline(object):
                                                 "ik_max_word") + self.gen_suggest(
                 MM._doc_type.index, item["tags"], 7, "simple")
 
-            rs = self.search.query("term", mm_order=mm["mm_order"]).execute()
+            rs = self.search.query("term", _id=item["order"]).execute()
             if len(rs) > 0:
-                mm.update(mm_seen_num=mm["mm_seen_num"], mm_fav_num=mm["mm_fav_num"])
+                mm.update(mm_seen_num=item["seen_num"], mm_fav_num=item["fav_num"])
             else:
                 mm.save()
         except Exception as e:
             print(e.__cause__)
+
         return item
 
     def gen_suggest(self, index, text, weight, analyzer):
@@ -56,7 +58,7 @@ class MmPipeline(object):
 
         if text:
             words = self.es.indices.analyze(index=index, analyzer=analyzer,
-                                       body={"text": text})
+                                            body={"text": text})
             analyzed_words = set([x["token"] for x in words["tokens"] if len(x["token"]) > 1])
             new_words = analyzed_words - used_words
             for item in new_words:
@@ -67,6 +69,7 @@ class MmPipeline(object):
             suggests.append({"input": list(new_words), "weight": weight})
 
         return suggests
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -80,6 +83,7 @@ class FdsPipeline(object):
         else:
             spider.coll.update_one({"_id": item["_id"]}, {"$set": {"seen": item["seen"], "like": item['like']}})
         return item
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -105,6 +109,7 @@ class BiliMoviePipeline(object):
             pass
         return item
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -124,6 +129,7 @@ class BiliAnimePipeline(object):
         except:
             pass
         return item
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -160,6 +166,7 @@ class BiliAnimeDetailPipeline(object):
                 print(e.__cause__)
                 pass
             return item
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -210,7 +217,7 @@ class AudioAlbumPipeline(object):
 
         if text:
             words = self.es_album.indices.analyze(index=index, analyzer=analyzer,
-                                            body={"text": text})
+                                                  body={"text": text})
             analyzed_words = set([x["token"] for x in words["tokens"] if len(x["token"]) > 1])
             new_words = analyzed_words - used_words
             for item in new_words:
@@ -229,6 +236,7 @@ class AudioAlbumPipeline(object):
         try:
             es_item = AudioAlbum()
             es_item["aa_order"] = item["order"]
+            es_item.meta.id = es_item["aa_order"]
             es_item["aa_zhubo_id"] = item["zhubo_id"]
             es_item["aa_cover"] = item["cover"]
             es_item["aa_title"] = item["title"]
@@ -238,8 +246,9 @@ class AudioAlbumPipeline(object):
             es_item["aa_desc"] = item.get("desc", '主播比较懒，还没有该专辑的相关描述哦')
             es_item["aa_sounds"] = item["sounds"]
             es_item["aa_play_num"] = item["play_num"]
-            es_item["aa_suggest"] = self.gen_suggest(AudioAlbum._doc_type.index, item["title"], 10, analyzer="ik_max_word") \
-                                 + self.gen_suggest(AudioAlbum._doc_type.index, item["tag"], 7, analyzer="simple")
+            es_item["aa_suggest"] = self.gen_suggest(AudioAlbum._doc_type.index, item["title"], 10,
+                                                     analyzer="ik_max_word") \
+                                    + self.gen_suggest(AudioAlbum._doc_type.index, item["tag"], 7, analyzer="simple")
 
             rs = self.search_album.query("term", aa_order=es_item["aa_order"]).execute()
             if len(rs) <= 0:
